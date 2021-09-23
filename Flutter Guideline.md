@@ -2,8 +2,7 @@
 
 Hi! this document contains recommendations indicating different policies, procedures or standard on how development should be conducted.
 
-General coding guideline can be found here:
-> https://gitlab.nortal.com/neomid/neos1-flutter/-/blob/master/analysis_options.yaml
+General coding guideline can be found, in your project here **analysis_options.yaml** file.
 
 <project>
 	
@@ -27,8 +26,8 @@ Here are folder types that would be part of feature folder.
 |-- datasources/
 |-- business_objects/
 |-- dtos/
-|-- exceptions/
 |-- ui/
+|-- exceptions/
 ```
 
 If there's more than one file related to a single file, you can group them in a folder, for example generated code for a class in a file.
@@ -55,11 +54,12 @@ Guideline Recommendations:
  - Only interact with high level classes, meaning: Repositories, Services or any other high level coordinators.
  - Return final actions result to caller. For example:
  ```dart
- Future<String> bookAppointment(...data required for booking...);
- Future<boo> login(...data required to login...);
+ Future<String?> bookAppointment(...data required for booking...);
+ Future<bool> login(...data required to login...);
  ```
  - Only use **Repositories**, **Services** interfaces not concrete implementations.
  - Suffix your class with Cubit, example LoginCubit.
+ - Cubit class files should be under the cubits folder of the feature.
 </cubits>
 
 <cubitState>
@@ -133,7 +133,10 @@ class PremiumBookingRepository implements BookingRepository {}
 - Do not use tools, platform related libraries nor perform network logic in repositories, encapsulate that in data sources.
 - Only use data sources inside repositories.
 - Only receive as input primitive or business object and output business objects.
+- Implementations of the **Repository API** should be named with the **repository class** name as suffix.
 - Return Futures for public API.
+- Implementation of the repository should not change their public API (return type, method arguments).
+- Repository class files should be under the repositories folder of the feature.
 
 </repository>
 
@@ -153,14 +156,18 @@ abstract class AppointmentService {
 }
 ```
 Guideline Recommendations.
--  Suffix class name with Service.
+-  Suffix class name with **Service**.
 - Only define services for features or scope of features and name them so.
 - Use services to provide functionalities required to implement a business logic.
 - Use data sources to access to data required to implement a functionality business logic.
 - Do not use tools, platform related libraries nor perform network logic in services, implement it in data sources.
 - Only use data sources inside services.
 - Only receive as input primitive or business object and output business objects.
+- Implementations of the **Service API** should be named with the **service class** name as suffix.
 - Return Futures for public API.
+- Implementation of the service should not change their public API (return type, method arguments).
+- Service class files should be under the services folder of the feature.
+
 </services>
 
 <datasources>
@@ -181,7 +188,7 @@ abstract class RemoteBookingDataSource {
 
 Guideline Recommendations:
 - Keep the base type of data sources to local and remote.
-- Name implementation after library or tool used, for example:
+- Name implementation after library or tool used and the data source name as suffix, for example:
 ```dart
 class SQLiteBookingDataSource implements LocalBookingDataSource {
 ............... Implementation ................
@@ -197,7 +204,11 @@ class MemoryBookingDataSource implements LocalBookingDataSource {
 ```
 - Handle library or tool errors in data source and convert them to app custom exception.
 - Only receive as input primitive or business object and output business objects or primitive.
+- Implementations of the **Data Source API** should be named with the **Data Source class** name as suffix.
 - Return Futures for public API.
+- Implementation of the data sources should not change their public API (return type, method arguments).
+- Data sources class files should be under the datasources folder of the feature.
+
 </datasources>
 
 <dtos>
@@ -205,9 +216,141 @@ class MemoryBookingDataSource implements LocalBookingDataSource {
 ## Data Transfer Objects - DTOS
 
 Data transfer objects - used to transfer data from one system to another.
-
+Example
 ```dart
-
+class ApiRequest {
+... fields...
+}
+class ApiResponse {
+... fields...
+}
+```
+```dart
+class SQLiteTableDefinition {
+... fields ...
+}
 ```
 
+Guidelines:
+
+- Use DTO to represent database tables.
+- Use DTO to represent api request and response.
+- Use DTO to implement library required data.
+   For example to use a persistence library your data need to extend an object or add more fields, create a DTO instead.
+- Implement mappers in the DTO class, for example.
+
+```dart
+class ApiRequest {
+	... fields...
+	factory ApiRequest.fromBO(BOObject bo) {
+		...mapper code...
+	}
+	BOObject toBO() {
+		... mapper code...
+	}
+}
+```
+- Do not implement saving or fetching logic in DTO, implement it in data sources.
+- DTO class files should be under the dtos folder of the feature.
+
 </dtos>
+
+<bo>
+
+## Business Object
+
+Business Object are data classes representation of a part of the business or an item within it, they are used to execute business logic independently of platform, library or tools.
+
+A business object may represent, for example, **a person, place, event, business process, or concept** and  **invoice, a product, a transaction or even details of a person**.
+
+Guideline:
+
+- Business Object classes name should be suffixed with BO.
+- Business Object classes should only contains data fields or method to format data fields.
+- Business Object classes should implement equals and hash-code methods, fromJson and toJson.
+- Business Object classes fields type should only be primitive or other business object.
+- Business Object class files should be under the business_objects folder of the feature.
+
+</bo>
+
+<ui>
+
+## User Interface (UI)
+
+Code that are related to the user's device interface, for example: Components, Screens, PageBuilders.
+
+### Screens
+
+Guideline:
+
+- Screens filename and classes should be suffixed with **Screen**.
+- Screens classes should only interact with cubit classes.
+- If the screen widget tree has different sections that should update without updating the full screen, group them by private widget classes that represent updated regions. For example:
+```dart
+class LoginScreen extends StatelessWidget {
+... fields and constructor...
+	@override  
+	Widget build(BuildContext context) {  
+	    return Column(  
+		    children: <Widget>[
+			    _LoginLogo,
+			    _LoginForm,
+			    _LoginActions,
+			    _LoginFooter
+		    ],
+		);
+	}
+}
+
+class _LoginLogo extends StatelessWidget {}
+class _LoginForm extends StatefullWidget {}
+class _LoginActions extends StatelesssWidget {}
+class _LoginFooter extends StatelessWidget {}
+```
+- If a screen use a cubit, events for ui state changes should only be driven by the cubit.
+- Use private widget classes instead of functions to build subtrees, for example:
+```dart
+class SomeWidget extends StatelessWidget {
+	@override
+	Widget build(BuildContext context) {
+		... 
+	}
+}
+class _SubTree1 extends StatelessWidget {}
+class _SubTree2 extends StatelessWidget {}
+class _SubTree3 extends StatelessWidget {}
+class _SubTree4 extends StatelessWidget {}
+```
+
+</ui>
+
+<localization>
+
+## Localization
+For localization we use bd_l10n tool:
+```yaml
+project-type: flutter
+features:
+  - name: 'Common Localization' # name of the feature is also used as name of the generated file and class.
+    translation-dir: translation/common # where your localized messages are stored.
+    translation-template: common_en.arb # which file to use as template.
+    output-dir: lib/localizations/ # directory were the generated code will be generated.
+```
+
+When creating a new feature, for example Authentication, you would add the following settings:
+```yaml
+project-type: flutter  
+  
+features: # list of features used in the project, a project must have at least one feature.  
+  - name: 'Common Localization' # name of the feature is also used as name of the generated file and classes.  
+  translation-dir: translation/common # where your localized messages are stored.  
+  translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
+  output-dir: lib/localizations/ # Were the generated localization classes written.  
+
+  - name: 'Authentication Localization' # name of the feature is also used as name of the generated file and classes.  
+  translation-dir: translation/authentication # where your localized messages are stored.  
+  translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
+  output-dir: lib/localizations/ # Were the generated localization classes written.
+```
+
+<localization/>
