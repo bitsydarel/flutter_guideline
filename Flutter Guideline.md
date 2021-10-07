@@ -134,7 +134,7 @@ class PremiumBookingRepository implements BookingRepository {}
 - Only use data sources inside repositories.
 - Only receive as input primitive or business object and output business objects.
 - Implementations of the **Repository API** should be named with the **repository class** name as suffix.
-- Return Futures for public API.
+- Return Asynchronous type for public API (Future or Stream).
 - Implementation of the repository should not change their public API (return type, method arguments).
 - Repository class files should be under the repositories folder of the feature.
 
@@ -164,7 +164,7 @@ Guideline Recommendations.
 - Only use data sources inside services.
 - Only receive as input primitive or business object and output business objects.
 - Implementations of the **Service API** should be named with the **service class** name as suffix.
-- Return Futures for public API.
+- Return Asynchronous type for public API (Future or Stream).
 - Implementation of the service should not change their public API (return type, method arguments).
 - Service class files should be under the services folder of the feature.
 
@@ -205,7 +205,7 @@ class MemoryBookingDataSource implements LocalBookingDataSource {
 - Handle library or tool errors in data source and convert them to app custom exception.
 - Only receive as input primitive or business object and output business objects or primitive.
 - Implementations of the **Data Source API** should be named with the **Data Source class** name as suffix.
-- Return Futures for public API.
+- Return Asynchronous type for public API (Future or Stream).
 - Implementation of the data sources should not change their public API (return type, method arguments).
 - Data sources class files should be under the datasources folder of the feature.
 
