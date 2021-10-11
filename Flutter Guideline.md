@@ -134,6 +134,7 @@ class PremiumBookingRepository implements BookingRepository {}
 - Only use data sources inside repositories.
 - Only receive as input primitive or business object and output business objects.
 - Implementations of the **Repository API** should be named with the **repository class** name as suffix.
+- Avoid naming repositories with **Impl**  suffix, name them using **Default** prefix + **Base repositories name**.
 - Return Asynchronous type for public API (Future or Stream).
 - Implementation of the repository should not change their public API (return type, method arguments).
 - Repository class files should be under the repositories folder of the feature.
@@ -164,6 +165,7 @@ Guideline Recommendations.
 - Only use data sources inside services.
 - Only receive as input primitive or business object and output business objects.
 - Implementations of the **Service API** should be named with the **service class** name as suffix.
+- Avoid naming services with **Impl**  suffix, name them using **Default** prefix + **Base service name**.
 - Return Asynchronous type for public API (Future or Stream).
 - Implementation of the service should not change their public API (return type, method arguments).
 - Service class files should be under the services folder of the feature.
