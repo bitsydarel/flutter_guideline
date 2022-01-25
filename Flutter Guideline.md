@@ -23,11 +23,12 @@ Here are folder types that would be part of feature folder.
 |-- cubits/
 |-- services/
 |-- repositories/
-|-- datasources/
+|-- data_sources/
 |-- business_objects/
 |-- dtos/
 |-- ui/
 |-- exceptions/
+|-- use_cases/
 ```
 
 If there's more than one file related to a single file, you can group them in a folder, for example generated code for a class in a file.
@@ -51,7 +52,7 @@ For example:
 Guideline Recommendations:
  - Only cover business logic needed for the UI.
  - Return Futures for public actions.
- - Only interact with high level classes, meaning: Repositories, Services or any other high level coordinators.
+ - Only interact with high level classes, meaning: UseCases, Repositories, Services or any other high level coordinators.
  - Return final actions result to caller. For example:
  ```dart
  Future<String?> bookAppointment(...data required for booking...);
@@ -212,6 +213,56 @@ class MemoryBookingDataSource implements LocalBookingDataSource {
 - Data sources class files should be under the datasources folder of the feature.
 
 </datasources>
+
+<use_cases>
+
+## Use Cases
+
+Classes that used for making a single operation. 
+Following S.O.L.I.D, where "S" = Single Responsibility principle, UseCase, as a single function, 
+should make a single job, operation etc.
+
+Guidelines:
+- UseCase name should always has a **prefix**, which should be a verb, that describes the job that this class is doing. Ex: `class GetCurrentUserUseCase`, `class SignInUseCase`;
+- UseCase name should always has a **suffix** `UseCase`;
+- UseCase class should always has a public function `call()`, where return type is depends of the job that this use case is doing;
+- UseCase should have an access to `Repository` or `Service`;
+- UseCase **shouldn't** have an access to `DataSource` or `Cubit`;
+- UseCase should be used in `Cubit` or in other `UseCase`.
+
+
+```dart
+class GetCurrentUserUseCase {
+
+	final UserRepository _repository;
+
+	const GetCurrentUserUseCase(this._repository);
+
+	Future<User?> call() async {
+		await _repository.getCurrentUser();
+	}
+}
+```
+
+```dart
+class SignInUseCase {
+
+	final AuthenticationService _service;
+
+	const SignInUseCase(this._service);
+
+	Future<Result<bool>> call(Credentials credentials) async {
+		await _service.signIn(credentials);
+	}
+}
+```
+
+Using UseCases gives us next benefits: 
+
+- Class that makes a single job is easy to debug and test;
+- `Cubit` that has an access to several UseCases is easy to read and understand what `Cubit` is used for;
+
+</use_cases>
 
 <dtos>
 
