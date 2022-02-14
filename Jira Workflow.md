@@ -24,7 +24,7 @@
 
 * Open the Option.
 
-* Assign yourself to the subtask that you will implement.
+* Assign yourself to the subtask that you want to implement.
 
 * Move the subtask Jira status to In Progress
 
@@ -34,11 +34,11 @@
 
 * When implementation is completed, merge the subtask branch locally with the remote Option branch.
 
-* Merge subtask branch locally with develop branch.
+* Merge subtask branch locally with remote develop branch.
 
 * Create Pull request from subtask branch to Option branch.
 
-* When Pull request approved, merge Pull request in Option branch.
+* When Pull request approved, merge Pull request in remote Option branch.
 
 * Update Subtask Jira Status to Done.
 
