@@ -32,9 +32,9 @@
 
 * Implement the functionality required.
 
-* When implementation is completed, merge the subtask branch locally with the remote Option branch.
-
-* Merge subtask branch locally with remote develop branch.
+* When implementation is completed:
+  * Update the subtask branch locally with the remote Option branch. 
+  * Update the subtask branch locally with remote develop branch.
 
 * Create Pull request from subtask branch to Option branch.
 
@@ -43,6 +43,8 @@
 * Update Subtask Jira Status to Done.
 
 * Delete Subtask Branch.
+
+* If all the subtask of the Option has been completed move it to Ready for testing.
 
 ### Conventions & Rules:
 
