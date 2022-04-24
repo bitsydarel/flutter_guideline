@@ -17,7 +17,7 @@ Meaning at the root level you have folders defining features. For example:
 |-- settings/
 ```
 
-Common feature contains classes, functions or widgets that by default should be available in any features.
+Common/Core feature contains classes, functions or widgets that by default should be available in any features.
 
 So the idea is to have features of your application divided by top level folders.
 
@@ -68,7 +68,7 @@ Code that is related to the user's device interface, for example: UI PageBuilder
 
 ### Screen
 
-A screen is a user interface component that fill the whole device display and is the container of user interface
+A screen is a user interface component that fill the whole device display and is the container of user interface view or
 component (Button, Checkboxes, Images and ect).
 
 Also, a screen is a specific application navigation destination.
@@ -76,10 +76,8 @@ Also, a screen is a specific application navigation destination.
 Guideline:
 
 - Screens filename and classes should be suffixed with **Screen**.
-
 - Screens classes should only interact with cubit classes.
-- If the screen widget tree has different sections that should update without updating the full screen, group them by
-  private widget classes that represent updated regions. For example:
+- Screen build method should be divided by private widgets that separate its **update regions**/**use case**. For example:
 
 ```dart
 class LoginScreen extends StatelessWidget {
@@ -97,16 +95,81 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+// extracted by use case.
 class _LoginLogo extends StatelessWidget {}
 
+// extracted by update regions.
 class _LoginForm extends StatefullWidget {}
 
+// extracted by update regions.
 class _LoginActions extends StatelesssWidget {}
 
+// extracted by update regions.
 class _LoginFooter extends StatelessWidget {}
 ```
 
-- If a screen use a cubit, events for ui state changes should only be driven by the cubit.
+- After extracting to private widgets. If the screen file number of lines is greater than 400, 
+  you should move the private widgets to a part file. Part file naming convention for screen: 
+  ${name of the screen file}_components.dart. For example:
+
+login_screen.dart
+
+```dart
+part 'login_screen_components.dart';
+
+class LoginScreen extends StatelessWidget {
+  //...fields and constructor...
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        _LoginLogo,
+        _LoginForm,
+        _LoginActions,
+        _LoginFooter
+      ],
+    );
+  }
+}
+
+// Is kept here because it's does not break the 400 max line rule.
+class _LoginLogo extends StatelessWidget {}
+```
+
+login_screen_components.dart
+
+```dart
+part of 'login_screen.dart';
+
+/// [LoginScreen]'s fields.
+class _LoginForm extends StatelessWidget {}
+
+// ************************ Footer ************************
+
+/// [LoginScreen]'s footer.
+class _LoginFooter extends StatelessWidget {}
+
+// ************************* ACTIONS *********************************
+
+/// [LoginScreen]'s actions.
+class _LoginActions extends StatelessWidget {}
+```
+
+- Do not pass the cubit to screen constructors, instead access them using BlocBuilder, BlocListener or BlocConsumer.
+  For example:
+
+```dart
+class LoginScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<LoginCubit, LoginCubitState>(
+      // Here cubit is not specified either.
+      builder: (BuildContext context, LoginCubitState state) {},
+    );
+  }
+}
+```
+
 - Use private widget classes instead of functions to build subtrees, for example:
 
 ```dart
@@ -126,7 +189,45 @@ class _SubTree3 extends StatelessWidget {}
 class _SubTree4 extends StatelessWidget {}
 ```
 
+- A screen action/event callback should be part of the screen class as a method.
+  * Action/Event callback method should start with **on** prefix.
+  * Name of an action/event should match its use case.
+  For example:
+
+```dart
+class LoginScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      childreen: <Widget>[
+        Button1(onClick: _openRegisterUser),
+        Button2(onClick: _openLogin),
+        Field(onTextChanged: _onUserNameTextChanged),
+      ],
+    );
+  }
+  
+  void _openRegisterUser() {}
+  
+  void _openLogin() {}
+  
+  void _onUserNameTextChanged(String newText) {}
+}
+```
+
 ### UI View
+
+A view is a user interface component that does not fill the whole device display and is the container of user interface view or
+component (Button, Checkboxes, Images and ect).
+
+Also, a view is not an application navigation destination.
+
+Guideline:
+
+- View filename and classes should be suffixed with **View**.
+- View classes should only interact with cubit classes.
+- Screen build method should be divided by private widgets that separate its **update regions**/**use case**. For example:
+
 
 ### UI Components
 
@@ -139,7 +240,7 @@ Guideline Recommendations:
 
 - Only cover business logic needed for the UI.
 - Return Futures for public actions.
-- Only interact with high level classes, meaning: Repositories, Services or any other high level coordinators.
+- Only interact with high level classes, meaning: Use cases.
 - Return final actions result to caller. For example:
 
  ```dart
@@ -169,6 +270,93 @@ class LoginState {
 ```
 
 - Keep the class in the same file were the Cubit class is defined.
+
+## Use Cases
+
+Classes that used for making a single business operation/goal/job/task in your domain.
+
+Guidelines:
+- UseCase name should always have a **prefix**, which should be a verb, that describes the job that this class is doing. Ex: `class GetCurrentUserUseCase`, `class SignInUseCase`;
+- UseCase name should always have a **suffix** `UseCase`;
+- UseCase class should always have a public function `call()`, where return type is the result of executing the use case;
+- UseCase should have access only to `Repositories`, `Services` or any other `high level coordinators`;
+- UseCase **shouldn't** have access to `DataSource` or `Cubit` or interact with dtos or any other low level object;
+- UseCase should be used in `Cubit` or in other `UseCases`.
+
+Examples:
+```dart
+class GetCurrentUserUseCase {
+	final UserRepository _repository;
+	const GetCurrentUserUseCase(this._repository);
+	Future<User?> call() async {
+		await _repository.getCurrentUser();
+	}
+}
+```
+
+```dart
+class AuthenticateMemberUseCase {
+  /// Create a [AuthenticateMemberUseCase].
+  const AuthenticateMemberUseCase(
+    /* constructor arguments */
+  );
+
+  /* ... fields ...*/
+
+  /// Execute the use case.
+  Future<TegTask<void>> call(MemberAuthenticationCredentials credentials) {
+    return runTaskSafelyAsync<void>(() async {
+      final bool isEmailValid = credentials.email.isEmail;
+
+      if (!isEmailValid) {
+        throw const TegEmailInvalidException();
+      }
+      
+      final bool isConnected = await _hostDeviceInternetService.isConnected();
+
+      if (!isConnected) {
+        throw const TegInternetUnavailableException();
+      }
+
+      final String? deviceId = await _hostDeviceInfoRepository.getDeviceId();
+
+      if (deviceId == null) {
+        throw const TegDeviceIdUnavailableException();
+      }
+
+      final PublicPrivateKeyPair keyPair = await _keyGenerator.generate();
+
+      final Member member = await _authService.signIn(
+        email: credentials.email,
+        password: credentials.password,
+        deviceId: deviceId,
+        publicKey: keyPair.publicKey,
+      );
+
+      await _updateCurrentMemberUseCase(
+        member: member,
+        memberPrivateKey: keyPair.privateKey,
+        deviceId: deviceId,
+      );
+
+      await _saveMemberAuthenticationCredentialsUseCase(credentials);
+
+      final TegTask<List<Account>> memberAccountsTask = await _getMemberAccountsUseCase();
+
+      if (memberAccountsTask.failed) {
+        throw memberAccountsTask.exception;
+      }
+
+      await _updateMemberCurrentAccountUseCase(
+        member: member,
+        deviceId: deviceId,
+        memberPrivateKey: keyPair.privateKey,
+        account: memberAccountsTask.result.first,
+      );
+    });
+  }
+}
+```
 
 ## Repositories
 
@@ -402,14 +590,29 @@ project-type: flutter
 
 features: # list of features used in the project, a project must have at least one feature.  
   - name: 'Common Localization' # name of the feature is also used as name of the generated file and classes.  
-  translation-dir: translation/common # where your localized messages are stored.  
-  translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
-  output-dir: lib/localizations/ # Were the generated localization classes written.  
+    translation-dir: translation/common # where your localized messages are stored.  
+    translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
+    output-dir: lib/localizations/ # Were the generated localization classes written.  
 
-    - name: 'Authentication Localization' # name of the feature is also used as name of the generated file and classes.  
-  translation-dir: translation/authentication # where your localized messages are stored.  
-  translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
-  output-dir: lib/localizations/ # Were the generated localization classes written.
+  - name: 'Authentication Localization' # name of the feature is also used as name of the generated file and classes.  
+    translation-dir: translation/authentication # where your localized messages are stored.  
+    translation-template: en.arb # which file to use as template, this file should be in the translation-dir  
+    output-dir: lib/localizations/ # Were the generated localization classes written.
 ```
 
-## Analysis Options Rules.
+## How to structure assets
+
+The same as for Project code structure.
+
+First the feature name than the assets type and the files.
+
+Example:
+
+```
+|-- authentication/
+|---- svg/
+|------ password_hidden_icon.svg
+|------ forget_password_icon.svg
+|---- png/
+|------ background.png
+```
